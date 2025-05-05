@@ -1,0 +1,54 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+local Camera = workspace.CurrentCamera
+
+-- Configuração
+local aimbotKey = Enum.KeyCode.E
+local teamCheck = true
+local aiming = false
+local aimPart = "Head" -- Pode ser "HumanoidRootPart", "Torso", "Head" etc.
+local fov = 100 -- Raio de busca em pixels
+
+-- Interface de FOV
+local fovCircle = Drawing.new("Circle")
+fovCircle.Radius = fov
+fovCircle.Thickness = 1
+fovCircle.Filled = false
+fovCircle.Visible = true
+fovCircle.Color = Color3.fromRGB(255, 255, 0)
+
+-- Ativação por tecla
+UserInputService.InputBegan:Connect(function(input, gpe)
+	if gpe then return end
+	if input.KeyCode == aimbotKey then
+		aiming = true
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+	if input.KeyCode == aimbotKey then
+		aiming = false
+	end
+end)
+
+-- Buscar jogador mais próximo do centro (dentro do FOV)
+local function getClosestPlayer()
+	local closest = nil
+	local shortestDistance = fov
+
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild(aimPart) then
+			if teamCheck and player.Team == LocalPlayer.Team then
+				continue
+			end
+
+			local pos, onScreen = Camera:WorldToViewportPoint(player.Character[aimPart].Position)
+			if onScreen then
+				local dist = (Vector2.new(pos.X, pos.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
+				if dist < shortestDistance then
+					shortestDistance = dist
+					closest = player
